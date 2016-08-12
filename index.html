@@ -1,0 +1,95 @@
+<html>
+<head>
+	<title>EBU-TT-D Example</title>
+	<link rel="stylesheet" href="css/subtitles.css">
+	<script src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="node_modules/underscore/underscore-min.js"></script>
+	<script src="node_modules/requirejs/require.js"></script>
+	<script src="js/subtitles.js"></script>
+	<script src="js/cuepoints.js"></script>
+	<script type="text/javascript">
+		//
+		window.GLOBALCONFIGURATION = {
+			//Configuration for subtitles
+			"SUBTITLES": {
+				//Subtitle start threshold
+				"BEGINCUEPOINTSMARGIN": {
+					"POSITIVE": 500,
+					"NEGATIVE": 0
+				},
+				//Subtitle end threshold
+				"ENDCUEPOINTSMARGIN": {
+					"POSITIVE": 500,
+					"NEGATIVE": 0
+				}
+			},
+			//Configuration for cuepoints
+			"CUEPOINTSMARGIN": {
+				"POSITIVE": 0,
+				"NEGATIVE": 100
+			},
+		};
+		var subtitles, cuepoints;
+		
+		//Changes video and binds subtitles to video
+		var changeVideo = function () {
+			var videoSrc = $('input[name=video]').val(),
+				subtitlesSrc = $('input[name=subtitles]').val();
+			
+			//Imports the SubtitlesPlugin and Cuepoints
+			require(['SubtitlesPlugin', 'Cuepoints'], function (SubtitlesPlugin, Cuepoints) {
+				//Constructs cuepoints if it didn't exist
+				if(!cuepoints){
+					cuepoints = new Cuepoints();
+				}
+				//Unloads subtitles if it was created before
+				if(subtitles){
+					subtitles.unload();
+				}
+				//Constructs subtitles assigning the HTML element where it will render
+				subtitles = new SubtitlesPlugin($('#subtitles').get(0));
+				//Loads subtitles from url and inserts in Cuepoints
+				subtitles.load(cuepoints, subtitlesSrc);
+				//Changes video and registers to some video events
+				$('video')
+					.attr('src', videoSrc)
+					.on('timeupdate', function (e) {
+						//Check if exists some cuepoint in the current time
+						cuepoints.checkCuepoints(e.currentTarget.currentTime * 1000);
+					})
+					.on('seeking seeked', function () {
+						//Clears subtitles and recalculate sizes
+						subtitles.clearAndRefresh();
+					});
+			});
+		};
+
+		//Register to click on form submit button
+		$(document).on('click', 'input[type=submit]', function (e) {
+			changeVideo();
+			return false;
+		})
+	</script>
+</head>
+<body>
+	<h1>CCMA EBU-TT-D Subtitles parser</h1>
+	<!-- Container for video and subtitles -->
+	<div class="subtitles-container" style="width:640px;height:360px;background-color:black;position:relative;">
+		<!-- Video -->
+		<video width="100%" height="100%" controls></video>
+		<!-- End video -->
+		<!-- Subtitles layer -->
+		<div id="subtitles" class="subtitles"></div>
+		<!-- End subtitles layer -->
+	</div>
+	<!-- End container for video and subtitles -->
+
+	<!-- Form for change the video and subtitle -->
+	<form action="#">
+	  Video: <input type="text" name="video" value=""><br>
+	  Subtitles: <input type="text" name="subtitles" value=""><br>
+	  <input type="submit" value="Submit">
+	</form>
+	<!-- End form for change the video and subtitle -->
+</body>
+</html>
