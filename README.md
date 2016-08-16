@@ -1,30 +1,27 @@
-# ebu-ttd-parser
+# ebu-tt-d-parser
 
-A player agnostic ebu-tt-d subtitles library (and example) written in javascript.
+A player agnostic ebu-tt-d subtitles library (and example) for browser.
 
 ## Documentation
 
 ### Running the example
-Clone this repository and execute npm install to download all dependencies
+#### With npm
+Clone this repository and execute the following command
 
 ```javascript
-npm install
+npm start
 ```
 
-Once it is finished, you can serve it with your favourite HTTP Server and open the index.html on browser.
+#### Manually
+Download the next dependencies and copy them in their respective folders:
+* [jquery](https://github.com/jquery/jquery): node_modules/jquery/dist/jquery.min.js
+* [underscore.js](https://github.com/jashkenas/underscore): node_modules/underscore/underscore-min.js
+* [require.js](https://github.com/requirejs/requirejs): node_modules/requirejs/require.js
+
+Once you have done, you can serve it with your favourite HTTP Server and open the index.html on browser.
 
 ### Using the library
-This library is composed by two JS files -subtitles.js and cuepoints.js- and a CSS -subtitles.css- which have to be included on HTML together with some vendor dependencies.
-
-These are all the files that must be included on head:
-
-* subtitles.css: Its purpose is load, parse and render ebu-tt-d subtitles
-* [jquery](https://github.com/jquery/jquery)
-* [underscore.js](https://github.com/jashkenas/underscore)
-* [require.js](https://github.com/requirejs/requirejs)
-* subtitles.js: Library to parse and render EBU-TT-D subtitles
-* cuepoints.js: Tiny library to bind subtitles to video playing time.
-
+This library is composed by two JS files -subtitles.js and cuepoints.js- and a CSS -subtitles.css- which have to be included within HEAD section in the following order:
 
 ```html
 <link rel="stylesheet" href="css/subtitles.css">
@@ -35,7 +32,11 @@ These are all the files that must be included on head:
 <script src="js/cuepoints.js"></script>
 ```
 
-This library is player agnostic, it is responsibility of developer keep the subtitles plugin informed about the current time of the video and place the subtitles over the video, but in order to simplify the understanding we will show the minimum HTML structure necessary for HTML5 video.
+* subtitles.css: Stylesheet for subtitles.
+* subtitles.js: Library to parse and render EBU-TT-D subtitles
+* cuepoints.js: Tiny library to bind subtitles to video playing time.
+
+This library is player agnostic, and therefore it is responsibility of developer keep the subtitles plugin informed about the current time of the video and place the subtitles over the video. However. in order to simplify the understanding we will show the minimum HTML structure necessary for HTML5 video.
 
 ```html
 <!-- Container for video and subtitles -->

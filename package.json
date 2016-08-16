@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prestart": "npm install",
+    "start": "http-server -a localhost -p 8000"
   },
   "author": "MD_Equip_Publicacio@ccma.cat",
   "license": "MIT license",
@@ -12,5 +13,8 @@
     "jquery": "^3.1.0",
     "requirejs": "^2.2.0",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "http-server": "^0.9.0"
   }
 }
