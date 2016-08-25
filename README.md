@@ -141,3 +141,6 @@ Triggers all functions that are binded to the milisecond passed
 
 # License
 Apache License 2.0
+
+# Acknowledgement
+Parts of the CCMA's EBU-TT-D Subtitles Library were developed in the European collaborative research project HBB4ALL (Grant Agreement no 621014). This project has received funding from the European Union ICT Policy Support Programme (ICT PSP) under the Competitiveness and Innovation Framework Programme (CIP).
