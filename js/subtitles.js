@@ -2,6 +2,7 @@
 define('SubtitlesPlugin', [], function () {
 	var SubtitlesPlugin = function (el, playlist) {
 		this.el = el;
+		this.defaultStyles = null;
 		//this.playlist = playlist;
 
 		this.refresh = _.bind(this.refresh, this);
@@ -26,7 +27,6 @@ define('SubtitlesPlugin', [], function () {
 					that.getStylesFromFile(response);
 					that.getRegionsFromFile(response);
 					that.getEntriesFromFile(response);
-					that.setupDefaultSubtitleNode(response);
 					that.setupDefaultActiveRegions();
 					that.addCuepoints();
 					that.loadedResponse = response;
@@ -63,7 +63,7 @@ define('SubtitlesPlugin', [], function () {
 		clearSubtitlesDiv: function () { //esborrem subtitols
 			this.el.innerHTML = '';
 		},
-		clearAndRefresh: function () { //esborrem subtitols			
+		clearAndRefresh: function () { //esborrem subtitols
 			setTimeout(_.bind(function () {
 				this.clearSubtitlesDiv();
 				this.refresh();
@@ -93,7 +93,7 @@ define('SubtitlesPlugin', [], function () {
 					memo[k] = v;
 				});
 				return memo;
-			}, ttNodeDefaultConfig); //Start from defaultValue 
+			}, ttNodeDefaultConfig); //Start from defaultValue
 
 			this.setDefaultConfiguration();
 		},
@@ -133,11 +133,11 @@ define('SubtitlesPlugin', [], function () {
 				};
 			case 'tts:backgroundColor':
 				return {
-					'backgroundColor': nodeValue
+					'backgroundColor': that.hexToRgba(nodeValue)
 				};
 			case 'tts:color':
 				return {
-					'color': nodeValue
+					'color': that.hexToRgba(nodeValue)
 				};
 			case 'tts:fontFamily':
 				return {
@@ -283,12 +283,6 @@ define('SubtitlesPlugin', [], function () {
 				this.regions[sty.getAttribute('xml:id')] = styleObject;
 			}, this);
 		},
-		setupDefaultSubtitleNode: function (file) {
-			var div = this.ttNamespaceHelper(file, 'div');
-			if (div && div.length > 0) {
-				this.applyTTMLStyleIdToHTMLElement(this.el, div[0].getAttribute('style'));
-			}
-		},
 		setupDefaultActiveRegions: function () {
 			var regionElement;
 			_.each(this.regions, function (reg) {
@@ -301,8 +295,12 @@ define('SubtitlesPlugin', [], function () {
 			}, this);
 		},
 		getEntriesFromFile: function (file) {
-			var ps = this.ttNamespaceHelper(file, 'p');
+			var ps;
+			this.getDefaultStyles(file);
+
+			ps = this.ttNamespaceHelper(file, 'p');
 			this.entries = [];
+
 			_.each(ps, function (p, i) {
 				p = this.getEntry(p, i);
 				if (!_.isUndefined(p)) {
@@ -321,6 +319,23 @@ define('SubtitlesPlugin', [], function () {
 				text: textBuffer
 			};
 		},
+		getDefaultStyles: function (file) {
+			var style, divNode, bodyNode;
+
+			this.defaultStyles = [];
+
+			divNode = this.ttNamespaceHelper(file, 'div');
+			style = divNode[0].getAttribute("style");
+			if (style !== null) {
+				this.defaultStyles.push(style);
+			}
+
+			bodyNode = this.ttNamespaceHelper(file, 'body');
+			style = bodyNode[0].getAttribute("style");
+			if (style !== null) {
+				this.defaultStyles.push(style);
+			}
+		},
 		parseEntryTTNodes: function (p) { //Funció recursiva.
 			var result = "",
 				childString, el;
@@ -329,7 +344,7 @@ define('SubtitlesPlugin', [], function () {
 				switch (child.nodeName) {
 				case 'tt:span':
 				case 'span':
-					//un span pot tenir també estils TODO, aplicar estils en bucle.					
+					//un span pot tenir també estils TODO, aplicar estils en bucle.
 					el = document.createElement("span");
 					el.className = 'span-subtitle';
 					el = this.applyTTMLStyleIdToHTMLElement(el, child.getAttribute('style'));
@@ -365,6 +380,29 @@ define('SubtitlesPlugin', [], function () {
 			}
 			return ms;
 		},
+		hexToRgba: function (hex) {
+
+			if (hex.length === 7) {
+				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex),
+					r = parseInt(result[1], 16),
+					g = parseInt(result[2], 16),
+					b = parseInt(result[3], 16),
+					resultToString;
+				return 'rgb(' + r + ',' + g + ',' + b + ')';
+			}
+
+			if (hex.length === 9) {
+				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex),
+					r = parseInt(result[1], 16),
+					g = parseInt(result[2], 16),
+					b = parseInt(result[3], 16),
+					alfaInDecimal = parseInt(result[4], 16),
+					alfaInFloat = (alfaInDecimal / 255).toFixed(1);
+				return 'rgba(' + r + ',' + g + ',' + b + ',' + alfaInFloat + ')';
+			}
+
+			return null;
+		},
 		addCuepoints: function () {
 			var that = this,
 				addedCuepoint;
@@ -399,10 +437,17 @@ define('SubtitlesPlugin', [], function () {
 		showSubtitle: function (subt) {
 			var that = this;
 			return function () {
-				var paragraphContainer, regionContainer;
+				var defaultStyleWrapper, paragraphContainer, regionContainer;
+
 				if (that.el.innerHTML.indexOf('id="' + subt.id + '"') !== -1) {
 					return;
 				}
+				defaultStyleWrapper = document.createElement('div');
+
+				_.each(that.defaultStyles, function (style) {
+					defaultStyleWrapper = that.applyTTMLStyleIdToHTMLElement(defaultStyleWrapper, style);
+				}, that);
+
 
 				paragraphContainer = document.createElement('div');
 				paragraphContainer.className = 'paragraphContainer';
@@ -423,7 +468,9 @@ define('SubtitlesPlugin', [], function () {
 				}
 
 				regionContainer = that.applyTTMLRegionIdToHTMLElement(regionContainer, subt.region);
-				that.el.appendChild(regionContainer);
+
+				defaultStyleWrapper.appendChild(regionContainer);
+				that.el.appendChild(defaultStyleWrapper);
 			};
 		},
 		hideSubtitle: function (subt) {
@@ -431,12 +478,20 @@ define('SubtitlesPlugin', [], function () {
 			return function () {
 				var subtElement = document.getElementById(subt.id);
 				if (subtElement) {
-					that.el.removeChild(subtElement);
+					that.el.removeChild(subtElement.parentNode);
+					//the root point is parentNode, where we add defaultStyles
 				}
 			};
 		},
 		applyTTMLStyleIdToHTMLElement: function (el, styleId) {
-			return this.applyTTMLAttrToHTMLElement(el, this.styles[styleId]);
+			if (styleId) {
+				var styleCandidates = styleId.split(" ");
+
+				_.each(styleCandidates, function (x) {
+					el = this.applyTTMLAttrToHTMLElement(el, this.styles[x]);
+				}, this);
+			}
+			return el;
 		},
 		applyTTMLRegionIdToHTMLElement: function (el, regionId) {
 			return this.applyTTMLAttrToHTMLElement(el, this.regions[regionId]);
@@ -462,8 +517,8 @@ define('SubtitlesPlugin', [], function () {
 			};
 		},
 		convertCtoPx: function (value, direction) {
-			//Tendriamos que transformar las unidades "c" en algo valido, en base al cellResolution. 
-			//Segun specs hay que dividir el tamaño en rows & columns y, si no se indica lo contrario, 
+			//Tendriamos que transformar las unidades "c" en algo valido, en base al cellResolution.
+			//Segun specs hay que dividir el tamaño en rows & columns y, si no se indica lo contrario,
 			var cellSize;
 			if (direction === "x") {
 				cellSize = this.el.offsetWidth / this.ttNodeConfig.cellResolution.columns;
