@@ -263,6 +263,16 @@ define('SubtitlesPlugin', [], function () {
 						});
 					}
 				};
+			case 'tts:dir':
+				return {
+					'noop-dir': function (el) {
+						el.dir = nodeValue;
+					}
+				};
+			case 'tts:unicode-bidi':
+				return {
+					'unicode-bidi': nodeValue
+				};
 			}
 		},
 		getRegionsFromFile: function (file) {
